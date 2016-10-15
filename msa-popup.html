@@ -1,0 +1,77 @@
+<link rel="import" href="../msa-edition/msa-edition-mover.html"></link>
+<style>
+.msa-popup {
+	position: absolute;
+	top: 50px;
+	left: 50px;
+	background: white;
+	padding: 15px;
+	box-shadow: 1pt 1pt 2pt 1pt #aaa;
+}
+msa-popup-confirm {
+	text-align: center;
+}
+msa-popup-confirm button {
+	margin: 0px 10px 0px 10px;
+}
+</style>
+<template id="msa-popup-confirm">
+	<p class="text"></p>
+	<button class="yes">Yes</button>
+	<button class="no">No</button>
+</template>
+<script>
+(function(){
+
+// popup /////////////////////////////////
+
+var createPopup = function(dom) {
+	if(typeof dom=="string") dom = document.createElement(dom)
+	dom.classList.add("msa-popup")
+	/*dom.hide = popupHide
+	dom.show = popupShow
+	dom.close = popupClose*/
+	MsaEdition.makeMovable(dom)
+	document.body.appendChild(dom)
+	return dom
+}
+
+/*var popupHide = function() {
+	this.style.display = 'none'
+}
+
+var popupShow = function() {
+	this.style.display = ''
+}
+
+var popupClose = function() {
+	this.remove()
+}*/
+
+
+// confirm /////////////////////////////////
+
+var createConfirm = function(text, next) {
+	var confirm = document.createElement("msa-popup-confirm")
+	confirm.querySelector(".text").textContent = text
+	confirm.querySelector("button.yes").onclick = function() {
+		next()
+		confirm.remove()
+	}
+	confirm.querySelector("button.no").onclick = function() {
+		confirm.remove()
+	}
+	return createPopup(confirm)
+}
+
+App.registerElement("msa-popup-confirm", {
+	template:"#msa-popup-confirm"
+})
+
+// publish
+if(!document.MsaPopup) document.MsaPopup = MsaPopup = {}
+MsaPopup.create = createPopup
+MsaPopup.createConfirm = createConfirm
+
+})()
+</script>
