@@ -20,6 +20,12 @@ msa-popup-confirm button {
 	<button class="yes">Yes</button>
 	<button class="no">No</button>
 </template>
+<template id="msa-popup-input">
+	<p class="text"></p>
+	<input type="text">
+	<button class="ok">OK</button>
+	<button class="cancel">Cancel</button>
+</template>
 <script>
 (function(){
 
@@ -54,24 +60,54 @@ var popupClose = function() {
 var createConfirm = function(text, next) {
 	var confirm = document.createElement("msa-popup-confirm")
 	confirm.querySelector(".text").textContent = text
-	confirm.querySelector("button.yes").onclick = function() {
+	confirm.querySelector(".yes").onclick = function() {
 		next()
 		confirm.remove()
 	}
-	confirm.querySelector("button.no").onclick = function() {
+	confirm.querySelector(".no").onclick = function() {
 		confirm.remove()
 	}
-	return createPopup(confirm)
+	var popup = createPopup(confirm)
+	confirm.querySelector(".yes").focus()
+	return popup
 }
 
-App.registerElement("msa-popup-confirm", {
+Msa.registerElement("msa-popup-confirm", {
 	template:"#msa-popup-confirm"
+})
+
+// input /////////////////////////////////
+
+var createInput = function(text, next) {
+	var input = document.createElement("msa-popup-input")
+	var textDom = input.querySelector(".text")
+	var inputDom = input.querySelector("input")
+	textDom.textContent = text
+	var validate = function() {
+		next(inputDom.value)
+		input.remove()
+	}
+	input.querySelector("button.ok").onclick = validate
+	inputDom.onkeypress = function(e) {
+		if(e.which == 13) validate()
+	}
+	input.querySelector("button.cancel").onclick = function() {
+		input.remove()
+	}
+	var popup = createPopup(input)
+	inputDom.focus()
+	return popup
+}
+
+Msa.registerElement("msa-popup-input", {
+	template:"#msa-popup-input"
 })
 
 // publish
 if(!document.MsaPopup) document.MsaPopup = MsaPopup = {}
 MsaPopup.create = createPopup
 MsaPopup.createConfirm = createConfirm
+MsaPopup.createInput = createInput
 
 })()
 </script>

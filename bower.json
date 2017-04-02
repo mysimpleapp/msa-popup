@@ -1,0 +1,11 @@
+{
+  "name": "msa-popup",
+  "version": "0.1.0",
+  "homepage": "https://github.com/mysimpleapp/msa-popup",
+  "authors": [
+    "Nicolas CARREZ <nicolas.carrez@gmail.com>"
+  ],
+  "description": "MySimpleApp component to create popups.",
+  "main": "msa-popup.html",
+  "license": "MIT"
+}
