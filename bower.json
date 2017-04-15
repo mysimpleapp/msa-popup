@@ -7,5 +7,9 @@
   ],
   "description": "MySimpleApp component to create popups.",
   "main": "msa-popup.html",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "mysimpleapp": "*",
+    "msa-edition": "*"
+  }
 }

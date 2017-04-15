@@ -1,4 +1,21 @@
+<link rel="import" href="../mysimpleapp/mysimpleapp.pack.html"></link>
 <link rel="import" href="../msa-edition/msa-edition-mover.html"></link>
+<!-- SVGs -->
+<svg id="msa-popup-svg" style="display:none">
+	<!-- close icon -->
+	<symbol id="msa-popup-close" viewBox="0 0 100 100" stroke="#999" stroke-width="10" stroke-linecap="round">
+		<path d="m5 5l90 90" />
+		<path d="m5 95l90 -90" />
+	</symbol>
+</svg>
+<script>
+(function(){
+	var doc = Msa.getOwnerDocument()
+	var svg = doc.querySelector("svg#msa-popup-svg")
+	document.body.appendChild(svg)
+})()
+</script>
+<!-- style -->
 <style>
 .msa-popup {
 	position: absolute;
@@ -8,69 +25,181 @@
 	padding: 15px;
 	box-shadow: 1pt 1pt 2pt 1pt #aaa;
 }
-msa-popup-confirm {
-	text-align: center;
+.msa-popup-buttons {
+	text-align: right;
 }
-msa-popup-confirm button {
-	margin: 0px 10px 0px 10px;
+.msa-popup-buttons button {
+	margin-left: 10px;
+}
+.msa-popup-close-icon {
+	display: block-inline;
+	position: absolute;
+	top: 3px;
+	right: 3px;
+}
+.msa-popup-close-icon svg {
+	width: 7px;
+	height: 7px;
+	padding: 2px;
+	margin: 0;
+	cursor: pointer;
+	background-color: white;
+	border-radius: 2px;
+	border: 1px solid #999;
+}
+.msa-popup-close-icon svg:hover {
+	background-color: #EEE;
+}
+msa-popup-confirm p, msa-popup-input p {
+	margin: 0px 0px 10px 0px;
 }
 </style>
+<!-- templates -->
 <template id="msa-popup-confirm">
 	<p class="text"></p>
-	<button class="yes">Yes</button>
-	<button class="no">No</button>
 </template>
 <template id="msa-popup-input">
 	<p class="text"></p>
-	<input type="text">
-	<button class="ok">OK</button>
-	<button class="cancel">Cancel</button>
+	<p><input type="text"></p>
 </template>
+<!-- script -->
 <script>
 (function(){
 
 // popup /////////////////////////////////
 
-var createPopup = function(dom) {
-	if(typeof dom=="string") dom = document.createElement(dom)
-	dom.classList.add("msa-popup")
-	/*dom.hide = popupHide
-	dom.show = popupShow
-	dom.close = popupClose*/
-	MsaEdition.makeMovable(dom)
-	document.body.appendChild(dom)
-	return dom
+var createPopup = function(el, args) {
+	// if el is string, create element with this name
+	if(typeof el=="string") el = document.createElement(el)
+	// make el as popup
+	el.classList.add("msa-popup")
+	MsaEdition.makeMovable(el)
+	if(!args) args = {}
+	// callbacks
+	if(!el.msaPopupActs) el.msaPopupActs = popupActs
+	el.msaPopupOnClose = args.onClose
+	el.msaPopupOnCancel = args.onCancel
+	// buttons
+	var buttons = args.buttons
+	if(buttons) {
+		for(var i=0, len=buttons.length; i<len; ++i) {
+			addButton(el, buttons[i])
+		}
+	}
+	// close icon
+	var addCloseIcon = defArg(args.addCloseIcon, true)
+	if(addCloseIcon) {
+		var closeIcon = document.createElement("div")
+		closeIcon.className = "msa-popup-close-icon"
+		closeIcon.innerHTML = '<svg><use xlink:href="#msa-popup-close"></use></svg>'
+		el.appendChild(closeIcon)
+		closeIcon.popup = el
+		closeIcon.onclick = closeIconOnClick
+	}
+	// TODO: place popup in function of screen scrolling
+	// insert popup
+	document.body.appendChild(el)
+	return el
 }
 
-/*var popupHide = function() {
-	this.style.display = 'none'
+// popup acts
+
+var popupOnCancel = function() {
+	var popup = this.popup, onCancel = popup.msaPopupOnCancel
+	if(onCancel) popup.msaPopupOnCancel()
+}
+var popupActs = {}
+popupActs["cancel"] = popupOnCancel
+
+// close
+
+var closePopup = function(popup) {
+	var onClose = popup.msaPopupOnClose
+	if(onClose) popup.msaPopupOnClose()
+	popup.remove()
+}
+var closeIconOnClick = function() {
+	popupOnCancel.call(this)
+	closePopup(this.popup)
 }
 
-var popupShow = function() {
-	this.style.display = ''
+// button /////////////////////////////////
+
+var addButton = function(popup, button) {
+	// create button element
+	var buttonEl = document.createElement("button")
+	buttonEl.popup = popup
+	buttonEl.onclick = buttonOnClick
+	// button text
+	var act = button.act
+	buttonEl.textContent = defArg(button.text, 
+		(act==="cancel") ? "Cancel" : "OK")
+	// act
+	if(typeof act==="string")
+		var act = popup.msaPopupActs[act]
+	buttonEl.act = act
+	// closePopup
+	buttonEl.closePopup = defArg(button.closePopup, true)
+	// get buttonsDiv (create it if needed)
+	var buttonsDiv = popup.querySelector(".msa-popup-buttons")
+	if(!buttonsDiv) {
+		buttonsDiv = document.createElement("div")
+		buttonsDiv.className = "msa-popup-buttons"
+		popup.appendChild(buttonsDiv)
+	}
+	//insert button in buttonsDiv
+	buttonsDiv.appendChild(buttonEl)
+	return buttonEl
 }
 
-var popupClose = function() {
-	this.remove()
-}*/
+var buttonOnClick = function(){
+	var popup = this.popup
+	// act
+	if(this.act) this.act()
+	// close
+	if(this.closePopup)
+		closePopup(popup)
+}
 
 
 // confirm /////////////////////////////////
 
-var createConfirm = function(text, next) {
-	var confirm = document.createElement("msa-popup-confirm")
-	confirm.querySelector(".text").textContent = text
-	confirm.querySelector(".yes").onclick = function() {
-		next()
-		confirm.remove()
+var createConfirm = function(text, args) {
+	// create el from text
+	var el = document.createElement("msa-popup-confirm")
+	el.querySelector(".text").textContent = text
+	// default args
+	if(!args) args = {}
+	else if(typeof args==="function") {
+		args = { onConfirm: args }
 	}
-	confirm.querySelector(".no").onclick = function() {
-		confirm.remove()
+	// default buttons
+	if(!args.buttons) {
+		args.buttons = [
+			{text:"Yes", act:"confirm"},
+			{text:"No", act:"cancel"}
+		]
 	}
-	var popup = createPopup(confirm)
-	confirm.querySelector(".yes").focus()
+	// specific acts
+	el.msaPopupOnConfirm = args.onConfirm
+	el.msaPopupActs = confirmPopupActs
+	// create as popup
+	var popup = createPopup(el, args)
+	// focus first button
+	el.querySelector(".msa-popup-buttons button").focus()
 	return popup
 }
+
+// confirm popup acts
+
+var confirmOnConfirm = function() {
+	var popup = this.popup, onConfirm = popup.msaPopupOnConfirm
+	if(onConfirm) popup.msaPopupOnConfirm()
+}
+var confirmPopupActs = Object.assign({}, popupActs)
+confirmPopupActs["confirm"] = confirmOnConfirm
+
+// register confirm popup
 
 Msa.registerElement("msa-popup-confirm", {
 	template:"#msa-popup-confirm"
@@ -78,32 +207,76 @@ Msa.registerElement("msa-popup-confirm", {
 
 // input /////////////////////////////////
 
-var createInput = function(text, next) {
-	var input = document.createElement("msa-popup-input")
-	var textDom = input.querySelector(".text")
-	var inputDom = input.querySelector("input")
-	textDom.textContent = text
-	var validate = function() {
-		next(inputDom.value)
-		input.remove()
+var createInput = function(text, args) {
+	// create element from text
+	var el = document.createElement("msa-popup-input")
+	el.querySelector(".text").textContent = text
+	// default args
+	if(!args) args = {}
+	else if(typeof args==="function") {
+		args = { onInput: args }
 	}
-	input.querySelector("button.ok").onclick = validate
-	inputDom.onkeypress = function(e) {
-		if(e.which == 13) validate()
+	// default buttons
+	if(!args.buttons) {
+		args.buttons = [
+			{text:"OK", act:"input"},
+			{text:"Cancel", act:"cancel"}
+		]
 	}
-	input.querySelector("button.cancel").onclick = function() {
-		input.remove()
+	// specific popup acts
+	el.msaPopupOnInput = args.onInput
+	el.msaPopupActs = inputPopupActs
+	// onpress enter on input => validate
+	var input = el.querySelector("input")
+	input.popup = el
+	input.onkeypress = inputOnKeyPress
+	var argsInput = args.input
+	if(argsInput) {
+		Object.assign(input, argsInput)
+		if(argsInput.style) Object.assign(input.style, argsInput.style)
 	}
-	var popup = createPopup(input)
-	inputDom.focus()
+	// create as popup
+	var popup = createPopup(el, args)
+	// focus on input
+	input.focus()
 	return popup
 }
+
+// on input key press
+var inputOnKeyPress = function(e) {
+	if(e.which == 13) {
+		var popup = this.popup
+		popup.msaPopupActs["input"].call(this)
+		closePopup(popup)
+	}
+}
+
+// input popup acts
+
+var inputOnInput = function() {
+	var popup = this.popup, onInput = popup.msaPopupOnInput
+	if(onInput) {
+		var val = popup.querySelector("input").value
+		popup.msaPopupOnInput(val)
+	}
+}
+var inputPopupActs = Object.assign({}, popupActs)
+inputPopupActs["input"] = inputOnInput
+
+// register web component
 
 Msa.registerElement("msa-popup-input", {
 	template:"#msa-popup-input"
 })
 
-// publish
+// common ///////////////////////////////////
+
+var defArg = function(arg, defVal) {
+	return (arg===undefined) ? defVal : arg
+}
+
+// publish //////////////////////////////////
+
 if(!document.MsaPopup) document.MsaPopup = MsaPopup = {}
 MsaPopup.create = createPopup
 MsaPopup.createConfirm = createConfirm

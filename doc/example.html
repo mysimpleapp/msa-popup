@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<link rel="import" href="../../mysimpleapp/mysimpleapp.pack.html"></link>
+		<link rel="import" href="../msa-popup.html"></link>
+		<style>
+			my-webcomponent {
+				display: block;
+				width: 150px;
+			}
+			my-webcomponent .line {
+				line-height: 50px;
+				font-size: 16px;
+				font-weight: bold;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<template id="my-webcomponent">
+			<div class='line'>my-webcomponent</div>
+		</template>
+		<script>
+			// generic
+			Msa.registerElement("my-webcomponent", {
+				template: "#my-webcomponent"
+			})
+			var el = document.createElement("my-webcomponent")
+			document.body.appendChild(el)
+			MsaPopup.create(el, {
+				buttons: [{
+					text: "OK"
+				}]
+			})
+			// confirm
+			MsaPopup.createConfirm("Are you sure ?", function(){
+				console.log("You confirmed to be sure.")
+			})
+			// input
+			MsaPopup.createInput("Give me your name:", function(name){
+				console.log("Your name is:", name)
+			})
+		</script>
+	</body>
+</html>
