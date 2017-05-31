@@ -1,4 +1,4 @@
-<link rel="import" href="../mysimpleapp/mysimpleapp.pack.html"></link>
+<link rel="import" href="../mysimpleapp/mysimpleapp.html"></link>
 <link rel="import" href="../msa-edition/msa-edition-mover.html"></link>
 <!-- SVGs -->
 <svg id="msa-popup-svg" style="display:none">
@@ -10,7 +10,7 @@
 </svg>
 <script>
 (function(){
-	var doc = Msa.getOwnerDocument()
+	var doc = Msa.getDoc()
 	var svg = doc.querySelector("svg#msa-popup-svg")
 	document.body.appendChild(svg)
 })()
@@ -105,8 +105,8 @@ var createPopup = function(el, args) {
 // popup acts
 
 var popupOnCancel = function() {
-	var popup = this.popup, onCancel = popup.msaPopupOnCancel
-	if(onCancel) popup.msaPopupOnCancel()
+	if(this.msaPopupOnCancel)
+		this.msaPopupOnCancel()
 }
 var popupActs = {}
 popupActs["cancel"] = popupOnCancel
@@ -114,13 +114,14 @@ popupActs["cancel"] = popupOnCancel
 // close
 
 var closePopup = function(popup) {
-	var onClose = popup.msaPopupOnClose
-	if(onClose) popup.msaPopupOnClose()
+	if(popup.msaPopupOnClose)
+		popup.msaPopupOnClose()
 	popup.remove()
 }
 var closeIconOnClick = function() {
-	popupOnCancel.call(this)
-	closePopup(this.popup)
+	var popup = this.popup
+	popupOnCancel.call(popup)
+	closePopup(popup)
 }
 
 // button /////////////////////////////////
@@ -155,7 +156,8 @@ var addButton = function(popup, button) {
 var buttonOnClick = function(){
 	var popup = this.popup
 	// act
-	if(this.act) this.act()
+	var act = this.act
+	if(act) act.call(popup)
 	// close
 	if(this.closePopup)
 		closePopup(popup)
@@ -193,8 +195,8 @@ var createConfirm = function(text, args) {
 // confirm popup acts
 
 var confirmOnConfirm = function() {
-	var popup = this.popup, onConfirm = popup.msaPopupOnConfirm
-	if(onConfirm) popup.msaPopupOnConfirm()
+	if(this.msaPopupOnConfirm)
+		this.msaPopupOnConfirm()
 }
 var confirmPopupActs = Object.assign({}, popupActs)
 confirmPopupActs["confirm"] = confirmOnConfirm
@@ -254,10 +256,9 @@ var inputOnKeyPress = function(e) {
 // input popup acts
 
 var inputOnInput = function() {
-	var popup = this.popup, onInput = popup.msaPopupOnInput
-	if(onInput) {
-		var val = popup.querySelector("input").value
-		popup.msaPopupOnInput(val)
+	if(this.msaPopupOnInput) {
+		var val = this.querySelector("input").value
+		this.msaPopupOnInput(val)
 	}
 }
 var inputPopupActs = Object.assign({}, popupActs)

@@ -3,6 +3,12 @@ MySimpleApp component to create popups.
 
 ## CLIENT API
 
+The following code is available by importing the corresponding web component:
+```html
+<!-- Example -->
+<link rel="import" href="../msa-popup/msa-popup.html"></link>
+```
+
 ### Function: MsaPopup.createConfirm
 From: `msa-popup.html`
 
