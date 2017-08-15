@@ -116,7 +116,7 @@ popupActs["cancel"] = popupOnCancel
 var closePopup = function(popup) {
 	if(popup.msaPopupOnClose)
 		popup.msaPopupOnClose()
-	popup.remove()
+	document.body.removeChild(popup)
 }
 var closeIconOnClick = function() {
 	var popup = this.popup
@@ -248,7 +248,7 @@ var createInput = function(text, args) {
 var inputOnKeyPress = function(e) {
 	if(e.which == 13) {
 		var popup = this.popup
-		popup.msaPopupActs["input"].call(this)
+		popup.msaPopupActs["input"].call(popup)
 		closePopup(popup)
 	}
 }
